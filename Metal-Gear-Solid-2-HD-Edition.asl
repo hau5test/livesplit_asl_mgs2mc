@@ -48,6 +48,14 @@ reset {
   return ((current.RoomCode != old.RoomCode) && (current.RoomCode == "n_title"));
 }
 
+onReset
+{
+  vars.CurrentGameTime = "0:00.000";
+  vars.CurrentAreaTime = "0:00.000";
+  vars.CurrentMixedTime = "0:00.000 | 0:00.000";
+  return true;
+}
+
 start {
   var D = vars.D;
 
@@ -60,7 +68,9 @@ start {
 }
 
 startup {
-  vars.CurrentAreaTime = "0:00.00";
+  vars.CurrentGameTime = "0:00.000";
+  vars.CurrentAreaTime = "0:00.000";
+  vars.CurrentMixedTime = "0:00.000 | 0:00.000";
   vars.SplitCode = "";
 
   vars.D = new ExpandoObject();
@@ -227,9 +237,9 @@ update {
   // for testing
   vars.SplitCode = Code;
 
-  if(current.RoomCode.Substring(0, 1) == "w") {
-    vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("mm\\:ss\\:fff");
-  } else vars.CurrentAreaTime = "";
+  vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("mm\\:ss\\.fff");
+  vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("mm\\:ss\\.fff");
+  vars.CurrentMixedTime = vars.CurrentAreaTime + " | " + vars.CurrentGameTime;
 
     if(old.Section != current.Section)
   {
