@@ -50,9 +50,9 @@ reset {
 
 onReset
 {
-  vars.CurrentGameTime = "0:00.000";
-  vars.CurrentAreaTime = "0:00.000";
-  vars.CurrentMixedTime = "0:00.000 | 0:00.000";
+  vars.CurrentGameTime = "";
+  vars.CurrentAreaTime = "";
+  vars.CurrentMixedTime = "";
   return true;
 }
 
@@ -237,8 +237,16 @@ update {
   // for testing
   vars.SplitCode = Code;
 
-  vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("mm\\:ss\\.fff");
-  vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("mm\\:ss\\.fff");
+  //if game time is past 1 hr mark, add the hr to the string
+  if(current.GameTime > 216000) {
+    vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("h\\:mm\\:ss\\.fff");
+  //else show only minutes, seconds and milliseconds
+  } else vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("mm\\:ss\\.fff");
+  //if game time is past 1 hr mark, add the hr to the string
+  if(current.StageGameTime > 3600) {
+    vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("mm\\:ss\\.fff");
+  //else show only minutes, seconds and milliseconds
+  } else vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("ss\\.fff");
   vars.CurrentMixedTime = vars.CurrentAreaTime + " | " + vars.CurrentGameTime;
 
     if(old.Section != current.Section)
