@@ -238,12 +238,14 @@ update {
   vars.SplitCode = Code;
 
   //if game time is past 1 hr mark, add the hr to the string
-  if(current.GameTime > 216000) {
+  // calculated as 60 minutes times 60 seconds times 60 frames
+  if(current.GameTime > (60 * 60 * 60)) {
     vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("h\\:mm\\:ss\\.fff");
   //else show only minutes, seconds and milliseconds
   } else vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("mm\\:ss\\.fff");
-  //if game time is past 1 hr mark, add the hr to the string
-  if(current.StageGameTime > 3600) {
+  //if stage game time is past 1 minute mark, add the hr to the string
+  // calculated as 60 seconds times 60 frames
+  if(current.StageGameTime > (60 * 60)) {
     vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("mm\\:ss\\.fff");
   //else show only minutes, seconds and milliseconds
   } else vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("ss\\.fff");
