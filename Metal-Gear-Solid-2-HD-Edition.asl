@@ -48,6 +48,14 @@ reset {
   return ((current.RoomCode != old.RoomCode) && (current.RoomCode == "n_title"));
 }
 
+onReset
+{
+  vars.CurrentGameTime = "";
+  vars.CurrentAreaTime = "";
+  vars.CurrentMixedTime = "";
+  return true;
+}
+
 start {
   var D = vars.D;
 
@@ -60,7 +68,9 @@ start {
 }
 
 startup {
-  vars.CurrentAreaTime = "0:00.00";
+  vars.CurrentGameTime = "0:00.000";
+  vars.CurrentAreaTime = "0:00.000";
+  vars.CurrentMixedTime = "0:00.000 | 0:00.000";
   vars.SplitCode = "";
 
   vars.D = new ExpandoObject();
@@ -227,9 +237,19 @@ update {
   // for testing
   vars.SplitCode = Code;
 
-  if(current.RoomCode.Substring(0, 1) == "w") {
-    vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("mm\\:ss\\:fff");
-  } else vars.CurrentAreaTime = "";
+  //if game time is past 1 hr mark, add the hr to the string
+  // calculated as 60 minutes times 60 seconds times 60 frames
+  if(current.GameTime > (60 * 60 * 60)) {
+    vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("h\\:mm\\:ss\\.fff");
+  //else show only minutes, seconds and milliseconds
+  } else vars.CurrentGameTime = TimeSpan.FromMilliseconds(current.GameTime * 1000 /60).ToString("mm\\:ss\\.fff");
+  //if stage game time is past 1 minute mark, add the hr to the string
+  // calculated as 60 seconds times 60 frames
+  if(current.StageGameTime > (60 * 60)) {
+    vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("mm\\:ss\\.fff");
+  //else show only minutes, seconds and milliseconds
+  } else vars.CurrentAreaTime = TimeSpan.FromMilliseconds(current.StageGameTime * 1000 /60).ToString("ss\\.fff");
+  vars.CurrentMixedTime = vars.CurrentAreaTime + " | " + vars.CurrentGameTime;
 
     if(old.Section != current.Section)
   {
