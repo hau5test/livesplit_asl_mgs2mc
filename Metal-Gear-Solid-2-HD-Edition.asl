@@ -300,3 +300,7 @@ split {
   // else always split
   return true;
 }
+
+isLoading {
+  return true;
+}
