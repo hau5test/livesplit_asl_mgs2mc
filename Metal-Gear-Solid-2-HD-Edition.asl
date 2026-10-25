@@ -29,6 +29,12 @@ state("METAL GEAR SOLID2") {
   uint      RationUseCount: 0x949340, 0x1590;
   uint      DamageCount: 0x949340, 0x146;
   uint      MechaKillCount: 0x949340, 0x158;
+  
+  byte      DoorRepairEventFlag: 0x949330, 0xC6F; //7th byte
+  byte      ForcedInfraredCallFlag: 0x949330, 0xD1E; //3rd byte
+  byte      GameOverProcessingFlag: 0x949330, 0x31C; //3rd byte
+  byte      TankerChapterClearPermissionFlag: 0x949330, 0x52; //3rd byte
+
 }
 
 gameTime
@@ -41,6 +47,8 @@ init {
   var D = vars.D;
   D.IsMasterCollection = true;
   D.Watchers = null;
+	D.setting = new HashSet<string>();
+	D.completedSplits = new HashSet<string>();
   return true;
 }
 
@@ -50,9 +58,12 @@ reset {
 
 onReset
 {
+  var D = vars.D;
   vars.CurrentGameTime = "";
   vars.CurrentAreaTime = "";
   vars.CurrentMixedTime = "";
+  D.completedSplits.Clear();
+  D.setting.Clear();
   return true;
 }
 
@@ -67,6 +78,12 @@ start {
   return false;
 }
 
+onStart {
+  var D = vars.D;
+  D.completedSplits.Clear();
+  D.setting.Clear();
+}
+
 startup {
   vars.CurrentGameTime = "0:00.000";
   vars.CurrentAreaTime = "0:00.000";
@@ -75,6 +92,10 @@ startup {
 
   vars.D = new ExpandoObject();
   var D = vars.D;
+  
+	D.setting = new HashSet<string>();
+
+  D.bitCheck = new Func<int, int, bool>((int val, int b) => (val & (1 << b)) != 0);
 
   D.TimeFormat = @"h\:mm\:ss\.ff";
   D.LastAreaLoadTime = null;
@@ -107,13 +128,19 @@ startup {
 
       settings.Add("r_tnk_33", true, "Guard Rush");
       settings.CurrentDefaultParent = "r_tnk_33";
+        settings.Add("DoorRepairEventFlag_7", false, "Enter Inside Engine Room via Prozac Skip");
+        settings.Add("ForcedInfraredCallFlag_3", false, "Heard Otacon's forced infrared sensor codec");
+        settings.Add("GameOverProcessingFlag_3", false, "Triggered the C4 Explosion");
         settings.Add("r_tnk_30", false, "Shot final sensor in Engine Room");
+        settings.Add("w02a_w03a", false, "Entered Deck 2 Port side");
+        settings.Add("w03a_w03b", false, "Entered Deck 2 Starboard side");
         settings.Add("r_tnk_32", false, "Start Guard Rush Encounter");
       settings.CurrentDefaultParent = "tanker";
 
     settings.Add("r_tnk_56", true, "Results (Tanker Only)");
       settings.CurrentDefaultParent = "r_tnk_56";
       settings.Add("r_tnk_42", false, "Enter Holds 1");
+        settings.Add("w04a_w04b", false, "Enter Holds 2");
       settings.SetToolTip("r_tnk_42", "This will split when the last codec before holds 1 is over");
       settings.Add("r_tnk_43", false, "Enter Holds 3");
       settings.SetToolTip("r_tnk_56", "You can keep this enabled if playing Tanker-Plant. It will not trigger.");
@@ -275,6 +302,41 @@ update {
 
 split {
   var D = vars.D;
+  D.setting.Clear();
+  for(int i = 0; i < 8; i++){
+    if(current.GameOverProcessingFlag != old.GameOverProcessingFlag && D.bitCheck(current.GameOverProcessingFlag, i)){
+      D.setting.Add("GameOverProcessingFlag_" + i);
+      print("check reached! GameOverProcessingFlag_" + i);
+    }
+    if(current.DoorRepairEventFlag != old.DoorRepairEventFlag && D.bitCheck(current.DoorRepairEventFlag, i)){
+      D.setting.Add("DoorRepairEventFlag_" + i);
+      print("check reached! DoorRepairEventFlag_" + i);
+    }
+    if(current.ForcedInfraredCallFlag != old.ForcedInfraredCallFlag && D.bitCheck(current.ForcedInfraredCallFlag, i)){
+      D.setting.Add("ForcedInfraredCallFlag_" + i);
+      print("check reached! ForcedInfraredCallFlag_" + i);
+    }
+    if(current.TankerChapterClearPermissionFlag != old.TankerChapterClearPermissionFlag && D.bitCheck(current.TankerChapterClearPermissionFlag, i)){
+      D.setting.Add("TankerChapterClearPermissionFlag_" + i);
+      print("check reached! TankerChapterClearPermissionFlag_" + i);
+    }
+  }
+
+  if (D.setting.Count > 0) {
+				foreach(string setting in D.setting){
+					// check for setting being present in setting, if set to true and finally add to map, only to split if not present yet (add successful)
+					if (settings.ContainsKey(setting) && settings[setting] && D.completedSplits.Add(setting)){
+						return true;
+					}
+				}
+			}
+
+  if(old.RoomCode != current.RoomCode)
+  {
+    if (settings.ContainsKey(old.RoomCode + "_" + current.RoomCode) && settings[old.RoomCode + "_" + current.RoomCode] && D.completedSplits.Add(old.RoomCode + "_" + current.RoomCode)){
+      return true;
+    }
+  }
 
   // logic to log if a code has been used already or not
   // to D.Watch
